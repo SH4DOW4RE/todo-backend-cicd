@@ -1,11 +1,11 @@
 const app = require('./app');
 const pool = require('./db');
-const { port } = require('./config');
+const { host, port } = require('./config');
 
 async function start() {
   await pool.query('SELECT 1');
-  const server = app.listen(port, () => {
-    console.log(`Todo API listening on port ${port}`);
+  const server = app.listen(port, host, () => {
+    console.log(`Todo API listening on http://${host}:${port}`);
   });
 
   async function shutdown(signal) {
