@@ -19,10 +19,10 @@ beforeAll(async () => {
   await pool.query('TRUNCATE TABLE users');
   await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
-  // Insertion de l'utilisateur avec le champ username obligatoire
+  // Ajout de password à l'insertion pour satisfaire le schéma SQL
   await pool.execute(
-    'INSERT INTO users (id, email, username) VALUES (?, ?, ?)',
-    [mockUser.id, mockUser.email, 'testuser']
+    'INSERT INTO users (id, email, username, password) VALUES (?, ?, ?, ?)',
+    [mockUser.id, mockUser.email, 'testuser', '$2b$10$hashedpassworddummyvalue']
   );
 });
 
