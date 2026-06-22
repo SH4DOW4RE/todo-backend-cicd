@@ -10,6 +10,8 @@ const { notFound, errorHandler } = require('./middleware/errors');
 
 const app = express();
 
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3ODIxMjAzNDUsImV4cCI6MTc4MjcyNTE0NSwic3ViIjoiMSJ9.brsiT0wsIc-gGJRxGmVQqF7h4EzPkPKyzH8R8PZwtWk
+
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin }));
