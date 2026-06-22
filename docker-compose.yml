@@ -7,6 +7,7 @@ services:
     init: true
     environment:
       NODE_ENV: production
+      HOST: 0.0.0.0
       PORT: 3000
       DB_HOST: database
       DB_PORT: 3306
