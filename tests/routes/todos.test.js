@@ -10,8 +10,22 @@ jest.mock('../../src/middleware/auth', () => {
   };
 });
 
-// REMPLACE 'pending' par ton vrai statut si nécessaire
+// Ajuste ici avec un de tes statuts si besoin
 const VALID_STATUS = 'pending'; 
+
+// On crée l'utilisateur avant de lancer TOUS les tests de ce fichier
+beforeAll(async () => {
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+  await pool.query('TRUNCATE TABLE users');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+
+  // Insertion de l'utilisateur requis par la clé étrangère
+  // Adapte les colonnes (ex: password, name) selon le vrai schéma de ta table `users`
+  await pool.execute(
+    'INSERT INTO users (id, email) VALUES (?, ?)',
+    [mockUser.id, mockUser.email]
+  );
+});
 
 describe('POST /todos', () => {
   it('should create a new todo successfully', async () => {
@@ -45,7 +59,6 @@ describe('POST /todos', () => {
 
 describe('GET /todos', () => {
   it('should get all todos for the authenticated user', async () => {
-    // Nettoyage local forcé avant l'insertion
     await pool.query('SET FOREIGN_KEY_CHECKS = 0');
     await pool.query('TRUNCATE TABLE todos');
     await pool.query('SET FOREIGN_KEY_CHECKS = 1');
@@ -68,13 +81,11 @@ describe('GET /todos', () => {
   });
 });
 
-
 describe('GET /todos/:id', () => {
   it('should return 404 if the todo does not exist', async () => {
     const res = await request(app).get('/todos/99999');
 
     expect(res.status).toBe(404);
-    // On cible le message là où il se trouve vraiment chez toi
     expect(res.body).toHaveProperty('error.message', 'Todo not found');
   });
 
@@ -87,12 +98,10 @@ describe('GET /todos/:id', () => {
 
 describe('GET /todos/search', () => {
   beforeEach(async () => {
-    // Nettoyage avant les tests de recherche pour isoler nos fixtures
     await pool.query('SET FOREIGN_KEY_CHECKS = 0');
     await pool.query('TRUNCATE TABLE todos');
     await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
-    // On insère deux todos spécifiques pour valider nos filtres
     await pool.execute(
       'INSERT INTO todos (id, author, title, content, archived, status) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)',
       [
@@ -120,7 +129,6 @@ describe('GET /todos/search', () => {
   });
 
   it('should return 400 if an unknown query parameter is passed', async () => {
-    // Ta fonction rejectUnknown() doit intercepter 'hackMe'
     const res = await request(app).get('/todos/search?hackMe=true');
 
     expect(res.status).toBe(400);
