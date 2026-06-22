@@ -52,6 +52,14 @@ jobs:
         run: npm run lint
 
       - name: Run Tests with Coverage
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: ""
+          DB_NAME: cicd_todo_test
+          CORS_ORIGIN: "*"
+          JWT_SECRET: "super-secret-de-test-pour-la-ci"
         run: npm run test:coverage
 
       - name: Run Tests
