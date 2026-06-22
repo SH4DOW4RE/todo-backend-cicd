@@ -70,11 +70,12 @@ router.get('/', asyncHandler(async (req, res) => {
   }
 
   const where = conditions.join(' AND ');
+  const offset = (page - 1) * limit;
   const [countRows] = await pool.execute(`SELECT COUNT(*) total FROM todos td WHERE ${where}`, params);
   const [rows] = await pool.execute(
     `SELECT td.id, td.author, td.folder_id AS folder, td.title, td.content, td.archived, td.status, td.\`date\`
-     FROM todos td WHERE ${where} ORDER BY td.\`date\` DESC, td.id DESC LIMIT ? OFFSET ?`,
-    [...params, limit, (page - 1) * limit]
+     FROM todos td WHERE ${where} ORDER BY td.\`date\` DESC, td.id DESC LIMIT ${limit} OFFSET ${offset}`,
+    params
   );
   res.json({
     data: await hydrateTodos(rows),
@@ -173,11 +174,12 @@ router.get('/search', asyncHandler(async (req, res) => {
   if (!['asc', 'desc'].includes(order)) throw new HttpError(400, 'order must be asc or desc');
 
   const where = conditions.join(' AND ');
+  const offset = (page - 1) * limit;
   const [countRows] = await pool.execute(`SELECT COUNT(*) total FROM todos td WHERE ${where}`, params);
   const [rows] = await pool.execute(
     `SELECT td.id, td.author, td.folder_id AS folder, td.title, td.content, td.archived, td.status, td.\`date\`
-     FROM todos td WHERE ${where} ORDER BY ${sortColumns[sort]} ${order.toUpperCase()}, td.id DESC LIMIT ? OFFSET ?`,
-    [...params, limit, (page - 1) * limit]
+     FROM todos td WHERE ${where} ORDER BY ${sortColumns[sort]} ${order.toUpperCase()}, td.id DESC LIMIT ${limit} OFFSET ${offset}`,
+    params
   );
   res.json({
     data: await hydrateTodos(rows),
