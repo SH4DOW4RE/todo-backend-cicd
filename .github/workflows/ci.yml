@@ -48,6 +48,9 @@ jobs:
           JWT_SECRET: "mock-secret-pour-les-migrations"
         run: npm run db:migrate
 
+      - name: Run Linter
+        run: npm run lint
+
       - name: Run Tests
         env:
           NODE_ENV: test

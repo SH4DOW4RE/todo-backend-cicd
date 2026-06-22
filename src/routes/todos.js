@@ -38,17 +38,17 @@ router.get('/', asyncHandler(async (req, res) => {
   rejectUnknown(req.query, ['page', 'limit', 'status', 'archived', 'folder', 'tag', 'search']);
   const page = req.query.page === undefined ? 1 : parseId(req.query.page, 'page');
   const limit = req.query.limit === undefined ? 50 : parseId(req.query.limit, 'limit');
-  if (limit > 100) throw new HttpError(400, 'limit cannot exceed 100');
+  if (limit > 100) {throw new HttpError(400, 'limit cannot exceed 100');}
 
   const conditions = ['td.author = ?'];
   const params = [req.user.id];
   if (req.query.status !== undefined) {
-    if (!TODO_STATUSES.includes(req.query.status)) throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);
+    if (!TODO_STATUSES.includes(req.query.status)) {throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);}
     conditions.push('td.status = ?');
     params.push(req.query.status);
   }
   if (req.query.archived !== undefined) {
-    if (!['true', 'false'].includes(req.query.archived)) throw new HttpError(400, 'archived must be true or false');
+    if (!['true', 'false'].includes(req.query.archived)) {throw new HttpError(400, 'archived must be true or false');}
     conditions.push('td.archived = ?');
     params.push(req.query.archived === 'true');
   }
@@ -98,10 +98,10 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 function searchDate(value, field, endOfDay = false) {
-  if (typeof value !== 'string') throw new HttpError(400, `${field} must be an ISO 8601 date or date-time`);
+  if (typeof value !== 'string') {throw new HttpError(400, `${field} must be an ISO 8601 date or date-time`);}
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const date = new Date(dateOnly ? `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z` : value);
-  if (Number.isNaN(date.getTime())) throw new HttpError(400, `${field} must be a valid ISO 8601 date or date-time`);
+  if (Number.isNaN(date.getTime())) {throw new HttpError(400, `${field} must be a valid ISO 8601 date or date-time`);}
   return date;
 }
 
@@ -112,7 +112,7 @@ router.get('/search', asyncHandler(async (req, res) => {
   ]);
   const page = req.query.page === undefined ? 1 : parseId(req.query.page, 'page');
   const limit = req.query.limit === undefined ? 50 : parseId(req.query.limit, 'limit');
-  if (limit > 100) throw new HttpError(400, 'limit cannot exceed 100');
+  if (limit > 100) {throw new HttpError(400, 'limit cannot exceed 100');}
 
   const conditions = ['td.author = ?'];
   const params = [req.user.id];
@@ -134,12 +134,12 @@ router.get('/search', asyncHandler(async (req, res) => {
     params.push(`%${text(req.query.content, 'content', { max: 255 })}%`);
   }
   if (req.query.status !== undefined) {
-    if (!TODO_STATUSES.includes(req.query.status)) throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);
+    if (!TODO_STATUSES.includes(req.query.status)) {throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);}
     conditions.push('td.status = ?');
     params.push(req.query.status);
   }
   if (req.query.archived !== undefined) {
-    if (!['true', 'false'].includes(req.query.archived)) throw new HttpError(400, 'archived must be true or false');
+    if (!['true', 'false'].includes(req.query.archived)) {throw new HttpError(400, 'archived must be true or false');}
     conditions.push('td.archived = ?');
     params.push(req.query.archived === 'true');
   }
@@ -157,7 +157,7 @@ router.get('/search', asyncHandler(async (req, res) => {
 
   const dateFrom = req.query.date_from === undefined ? undefined : searchDate(req.query.date_from, 'date_from');
   const dateTo = req.query.date_to === undefined ? undefined : searchDate(req.query.date_to, 'date_to', true);
-  if (dateFrom && dateTo && dateFrom > dateTo) throw new HttpError(400, 'date_from cannot be later than date_to');
+  if (dateFrom && dateTo && dateFrom > dateTo) {throw new HttpError(400, 'date_from cannot be later than date_to');}
   if (dateFrom) {
     conditions.push('td.`date` >= ?');
     params.push(dateFrom);
@@ -170,8 +170,8 @@ router.get('/search', asyncHandler(async (req, res) => {
   const sortColumns = { date: 'td.`date`', title: 'td.title', status: 'td.status' };
   const sort = req.query.sort || 'date';
   const order = (req.query.order || 'desc').toLowerCase();
-  if (!sortColumns[sort]) throw new HttpError(400, 'sort must be one of: date, title, status');
-  if (!['asc', 'desc'].includes(order)) throw new HttpError(400, 'order must be asc or desc');
+  if (!sortColumns[sort]) {throw new HttpError(400, 'sort must be one of: date, title, status');}
+  if (!['asc', 'desc'].includes(order)) {throw new HttpError(400, 'order must be asc or desc');}
 
   const where = conditions.join(' AND ');
   const offset = (page - 1) * limit;
@@ -201,7 +201,7 @@ async function update(req, res, partial) {
 
   const todo = await transaction(async (connection) => {
     await getTodo(id, req.user.id, connection);
-    if (input.folder !== undefined) await assertFolder(input.folder, req.user.id, connection);
+    if (input.folder !== undefined) {await assertFolder(input.folder, req.user.id, connection);}
     if (entries.length) {
       await connection.execute(
         `UPDATE todos SET ${entries.map(([field]) => `${field} = ?`).join(', ')} WHERE id = ? AND author = ?`,
@@ -223,7 +223,7 @@ router.patch('/:id', asyncHandler((req, res) => update(req, res, true)));
 router.delete('/:id', asyncHandler(async (req, res) => {
   const id = parseId(req.params.id);
   const [result] = await pool.execute('DELETE FROM todos WHERE id = ? AND author = ?', [id, req.user.id]);
-  if (!result.affectedRows) throw new HttpError(404, 'Todo not found');
+  if (!result.affectedRows) {throw new HttpError(404, 'Todo not found');}
   res.status(204).end();
 }));
 

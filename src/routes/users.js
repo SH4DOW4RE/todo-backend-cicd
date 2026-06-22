@@ -9,8 +9,8 @@ const router = express.Router();
 
 function email(value, optional = false) {
   const result = text(value, 'email', { max: 254, optional });
-  if (result === undefined) return undefined;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw new HttpError(400, 'email must be a valid email address');
+  if (result === undefined) {return undefined;}
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) {throw new HttpError(400, 'email must be a valid email address');}
   return result.toLowerCase();
 }
 
@@ -18,14 +18,14 @@ router.use(authenticate);
 
 router.get('/me', asyncHandler(async (req, res) => {
   const [rows] = await pool.execute('SELECT id, username, email FROM users WHERE id = ?', [req.user.id]);
-  if (!rows[0]) throw new HttpError(404, 'User not found');
+  if (!rows[0]) {throw new HttpError(404, 'User not found');}
   res.json(rows[0]);
 }));
 
 router.patch('/me', asyncHandler(async (req, res) => {
   const body = objectBody(req.body);
   rejectUnknown(body, ['username', 'email', 'password']);
-  if (!Object.keys(body).length) throw new HttpError(400, 'At least one field is required');
+  if (!Object.keys(body).length) {throw new HttpError(400, 'At least one field is required');}
 
   const values = {
     username: text(body.username, 'username', { min: 3, max: 50, optional: true }),

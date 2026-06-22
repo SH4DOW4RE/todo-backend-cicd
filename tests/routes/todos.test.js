@@ -36,7 +36,7 @@ describe('POST /todos', () => {
         status: VALID_STATUS
       });
 
-    if (res.status !== 201) console.log('Erreur POST:', res.body);
+    if (res.status !== 201) {console.log('Erreur POST:', res.body);}
 
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('id');
@@ -69,7 +69,7 @@ describe('GET /todos', () => {
 
     const res = await request(app).get('/todos');
     
-    if (res.status !== 200) console.log('Erreur GET:', res.body);
+    if (res.status !== 200) {console.log('Erreur GET:', res.body);}
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('data');

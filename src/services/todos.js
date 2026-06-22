@@ -2,7 +2,7 @@ const pool = require('../db');
 const { HttpError } = require('../errors');
 
 async function hydrateTodos(todos, executor = pool) {
-  if (!todos.length) return todos;
+  if (!todos.length) {return todos;}
   const ids = todos.map((todo) => todo.id);
   const placeholders = ids.map(() => '?').join(',');
   const [[parents], [tags]] = await Promise.all([
@@ -26,26 +26,26 @@ async function getTodo(id, author, executor = pool) {
     'SELECT id, author, folder_id AS folder, title, content, archived, status, `date` FROM todos WHERE id = ? AND author = ?',
     [id, author]
   );
-  if (!rows[0]) throw new HttpError(404, 'Todo not found');
+  if (!rows[0]) {throw new HttpError(404, 'Todo not found');}
   return (await hydrateTodos(rows, executor))[0];
 }
 
 async function assertFolder(folderId, author, executor = pool) {
-  if (folderId === null) return;
+  if (folderId === null) {return;}
   const [rows] = await executor.execute('SELECT id FROM folders WHERE id = ? AND author = ?', [folderId, author]);
-  if (!rows[0]) throw new HttpError(400, 'folder must be an existing folder owned by the current user');
+  if (!rows[0]) {throw new HttpError(400, 'folder must be an existing folder owned by the current user');}
 }
 
 async function assertParents(parentIds, author, todoId, connection) {
-  if (!parentIds.length) return;
+  if (!parentIds.length) {return;}
   const placeholders = parentIds.map(() => '?').join(',');
   const [rows] = await connection.query(
     `SELECT id FROM todos WHERE author = ? AND id IN (${placeholders})`,
     [author, ...parentIds]
   );
-  if (rows.length !== parentIds.length) throw new HttpError(400, 'Every parent must be an existing todo owned by the current user');
-  if (!todoId) return;
-  if (parentIds.includes(todoId)) throw new HttpError(400, 'A todo cannot be its own parent');
+  if (rows.length !== parentIds.length) {throw new HttpError(400, 'Every parent must be an existing todo owned by the current user');}
+  if (!todoId) {return;}
+  if (parentIds.includes(todoId)) {throw new HttpError(400, 'A todo cannot be its own parent');}
 
   const [cycles] = await connection.query(
     `WITH RECURSIVE ancestors AS (
@@ -55,7 +55,7 @@ async function assertParents(parentIds, author, todoId, connection) {
      ) SELECT 1 FROM ancestors WHERE parent_id = ? LIMIT 1`,
     [...parentIds, todoId]
   );
-  if (cycles.length) throw new HttpError(400, 'The parent relationships would create a cycle');
+  if (cycles.length) {throw new HttpError(400, 'The parent relationships would create a cycle');}
 }
 
 async function replaceRelations(todoId, author, parentIds, tagNames, connection) {

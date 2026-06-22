@@ -5,7 +5,7 @@ const { db } = require('../config');
 
 async function migrate() {
   const sql = await fs.readFile(path.join(__dirname, '../../database/schema.sql'), 'utf8');
-  const { connectionLimit: _connectionLimit, ...connectionOptions } = db;
+  const { ...connectionOptions } = db;
   const connection = await mysql.createConnection({ ...connectionOptions, multipleStatements: true });
   try {
     await connection.query(sql);

@@ -10,7 +10,7 @@ const router = express.Router();
 
 function email(value) {
   const result = text(value, 'email', { max: 254 }).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw new HttpError(400, 'email must be a valid email address');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) {throw new HttpError(400, 'email must be a valid email address');}
   return result;
 }
 
@@ -37,7 +37,7 @@ router.post('/login', asyncHandler(async (req, res) => {
 
   const [rows] = await pool.execute('SELECT id, username, email, password FROM users WHERE email = ?', [userEmail]);
   const user = rows[0];
-  if (!user || !(await bcrypt.compare(password, user.password))) throw new HttpError(401, 'Invalid email or password');
+  if (!user || !(await bcrypt.compare(password, user.password))) {throw new HttpError(401, 'Invalid email or password');}
 
   const token = jwt.sign({}, jwtSecret, { subject: String(user.id), expiresIn: jwtExpiresIn });
   res.json({ token, user: { id: user.id, username: user.username, email: user.email } });
