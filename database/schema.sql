@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS folders (
   KEY folders_author_idx (author),
   KEY folders_parent_idx (parent_id),
   CONSTRAINT folders_author_fk FOREIGN KEY (author) REFERENCES users (id) ON DELETE CASCADE,
-  CONSTRAINT folders_parent_fk FOREIGN KEY (parent_id) REFERENCES folders (id) ON DELETE SET NULL,
-  CONSTRAINT folders_not_self CHECK (id <> parent_id)
+  CONSTRAINT folders_parent_fk FOREIGN KEY (parent_id) REFERENCES folders (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS todos (
@@ -100,8 +99,7 @@ CREATE TABLE IF NOT EXISTS todo_parents (
   PRIMARY KEY (todo_id, parent_id),
   KEY todo_parents_parent_idx (parent_id),
   CONSTRAINT todo_parents_todo_fk FOREIGN KEY (todo_id) REFERENCES todos (id) ON DELETE CASCADE,
-  CONSTRAINT todo_parents_parent_fk FOREIGN KEY (parent_id) REFERENCES todos (id) ON DELETE CASCADE,
-  CONSTRAINT todo_parents_not_self CHECK (todo_id <> parent_id)
+  CONSTRAINT todo_parents_parent_fk FOREIGN KEY (parent_id) REFERENCES todos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tags are normalized and use a case-insensitive collation, so "Work" and "work" are one tag.
