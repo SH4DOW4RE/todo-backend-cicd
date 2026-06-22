@@ -51,6 +51,9 @@ jobs:
       - name: Run Linter
         run: npm run lint
 
+      - name: Run Tests with Coverage
+        run: npm run test:coverage
+
       - name: Run Tests
         env:
           NODE_ENV: test
