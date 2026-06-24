@@ -4,8 +4,8 @@ const helmet = require('helmet');
 const { corsOrigin } = require('./config');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
-const todoRoutes = require('./routes/todos');
-const folderRoutes = require('./routes/folders');
+const folderRoutes = require('./routes/folders'); // <-- Mets-le en PREMIER
+const todoRoutes = require('./routes/todos');    // <-- Mets-le en DEUXIÈME
 const { notFound, errorHandler } = require('./middleware/errors');
 
 const app = express();

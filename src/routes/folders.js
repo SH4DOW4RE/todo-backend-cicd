@@ -3,7 +3,8 @@ const pool = require('../db');
 const authenticate = require('../middleware/auth');
 const { HttpError, asyncHandler } = require('../errors');
 const { objectBody, rejectUnknown, text, parseId, nullableId } = require('../validation');
-const { transaction } = require('../services/todos');
+
+// ON ENLÈVE L'IMPORT DU SERVICE ICI POUR CASSER LA BOUCLE CIRCULAIRE
 
 const router = express.Router();
 router.use(authenticate);
@@ -60,6 +61,10 @@ router.post('/', asyncHandler(async (req, res) => {
   rejectUnknown(body, ['name', 'parent']);
   const name = text(body.name, 'name', { max: 255 });
   const parent = nullableId(body.parent, 'parent', true) ?? null;
+
+  // On importe 'transaction' dynamiquement au moment de l'exécution pour contourner le problème
+  const { transaction } = require('../services/todos');
+
   const folder = await transaction(async (connection) => {
     await assertParent(parent, req.user.id, undefined, connection);
     const [result] = await connection.execute(
@@ -83,6 +88,9 @@ async function update(req, res, partial) {
   let parent = nullableId(body.parent, 'parent', true);
   if (!partial && parent === undefined) {parent = null;}
   if (partial && name === undefined && parent === undefined) {throw new HttpError(400, 'At least one field is required');}
+
+  // Idem ici, import à la volée
+  const { transaction } = require('../services/todos');
 
   const folder = await transaction(async (connection) => {
     await getFolder(id, req.user.id, connection);
