@@ -111,8 +111,8 @@ describe('Todos Routes and Services', () => {
 
   // --- GET /todos/search (Recherche Avancée & Tris) ---
   it('should execute full-text advanced search and sorting options', async () => {
-    await pool.execute('INSERT INTO todos (id, author, title, content, status, \`date\`) VALUES (1, 1, "Apple", "Pie recipe", "pending", "2026-06-20 10:00:00")');
-    await pool.execute('INSERT INTO todos (id, author, title, content, status, \`date\`) VALUES (2, 1, "Banana", "Split recipe", "blocked", "2026-06-22 10:00:00")');
+    await pool.execute('INSERT INTO todos (id, author, title, content, status, `date`) VALUES (1, 1, "Apple", "Pie recipe", "pending", "2026-06-20 10:00:00")');
+    await pool.execute('INSERT INTO todos (id, author, title, content, status, `date`) VALUES (2, 1, "Banana", "Split recipe", "blocked", "2026-06-22 10:00:00")');
 
     const res = await request(app)
       .get('/todos/search')

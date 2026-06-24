@@ -10,7 +10,7 @@
     "db:migrate": "node src/scripts/migrate.js",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit",
     "test:coverage": "NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit --coverage",
-    "lint": "eslint ."
+    "lint": "eslint . --fix"
   },
   "engines": {
     "node": ">=20"

@@ -18,7 +18,7 @@ describe('Auth Middleware', () => {
     try {
       authMiddleware(req, res, next);
     } catch (err) {
-      if (err.status === 401) return;
+      if (err.status === 401) {return;}
     }
     expect(res.status).toHaveBeenCalledWith(401);
   });
@@ -28,7 +28,7 @@ describe('Auth Middleware', () => {
     try {
       authMiddleware(req, res, next);
     } catch (err) {
-      if (err.status === 401) return;
+      if (err.status === 401) {return;}
     }
     expect(res.status).toHaveBeenCalledWith(401);
   });
