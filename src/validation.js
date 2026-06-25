@@ -30,9 +30,17 @@ function boolean(value, field, optional = false) {
 function idArray(value, field, optional = false) {
   if (value === undefined && optional) {return undefined;}
   if (!Array.isArray(value)) {throw new HttpError(400, `${field} must be an array`);}
-  const ids = value.map((item) => Number(item));
+  const ids = value.map(Number);
   if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) {throw new HttpError(400, `${field} must contain positive integer IDs`);}
   return [...new Set(ids)];
+}
+
+function isEmail(value) {
+  if (/\s/.test(value)) {return false;}
+  const at = value.indexOf('@');
+  if (at < 1 || at !== value.lastIndexOf('@')) {return false;}
+  const dot = value.indexOf('.', at + 2);
+  return dot > at + 1 && dot < value.length - 1;
 }
 
 function tags(value, optional = false) {
@@ -54,4 +62,4 @@ function nullableId(value, field, optional = false) {
   return parseId(value, field);
 }
 
-module.exports = { TODO_STATUSES, objectBody, rejectUnknown, text, boolean, idArray, tags, parseId, nullableId };
+module.exports = { TODO_STATUSES, objectBody, rejectUnknown, text, boolean, idArray, tags, parseId, nullableId, isEmail };

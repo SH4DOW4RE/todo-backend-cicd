@@ -4,13 +4,13 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { jwtSecret, jwtExpiresIn } = require('../config');
 const { HttpError, asyncHandler } = require('../errors');
-const { objectBody, rejectUnknown, text } = require('../validation');
+const { objectBody, rejectUnknown, text, isEmail } = require('../validation');
 
 const router = express.Router();
 
 function email(value) {
   const result = text(value, 'email', { max: 254 }).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) {throw new HttpError(400, 'email must be a valid email address');}
+  if (!isEmail(result)) {throw new HttpError(400, 'email must be a valid email address');}
   return result;
 }
 

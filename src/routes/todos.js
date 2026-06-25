@@ -100,63 +100,63 @@ router.post('/', asyncHandler(async (req, res) => {
 function searchDate(value, field, endOfDay = false) {
   if (typeof value !== 'string') {throw new HttpError(400, `${field} must be an ISO 8601 date or date-time`);}
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
-  const date = new Date(dateOnly ? `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z` : value);
+  let normalizedValue = value;
+  if (dateOnly) {
+    const time = endOfDay ? '23:59:59.999' : '00:00:00.000';
+    normalizedValue = `${value}T${time}Z`;
+  }
+  const date = new Date(normalizedValue);
   if (Number.isNaN(date.getTime())) {throw new HttpError(400, `${field} must be a valid ISO 8601 date or date-time`);}
   return date;
 }
 
-router.get('/search', asyncHandler(async (req, res) => {
-  rejectUnknown(req.query, [
-    'q', 'title', 'content', 'status', 'archived', 'folder', 'tag', 'date_from', 'date_to',
-    'page', 'limit', 'sort', 'order'
-  ]);
-  const page = req.query.page === undefined ? 1 : parseId(req.query.page, 'page');
-  const limit = req.query.limit === undefined ? 50 : parseId(req.query.limit, 'limit');
-  if (limit > 100) {throw new HttpError(400, 'limit cannot exceed 100');}
-
-  const conditions = ['td.author = ?'];
-  const params = [req.user.id];
-  if (req.query.q !== undefined) {
-    const query = text(req.query.q, 'q', { max: 255 });
-    const pattern = `%${query}%`;
+function addTextSearchFilters(query, conditions, params) {
+  if (query.q !== undefined) {
+    const search = text(query.q, 'q', { max: 255 });
+    const pattern = `%${search}%`;
     conditions.push(`(td.title LIKE ? OR td.content LIKE ? OR EXISTS (
       SELECT 1 FROM todo_tags stt JOIN tags st ON st.id = stt.tag_id
       WHERE stt.todo_id = td.id AND st.name LIKE ?
     ))`);
     params.push(pattern, pattern, pattern);
   }
-  if (req.query.title !== undefined) {
+  if (query.title !== undefined) {
     conditions.push('td.title LIKE ?');
-    params.push(`%${text(req.query.title, 'title', { max: 255 })}%`);
+    params.push(`%${text(query.title, 'title', { max: 255 })}%`);
   }
-  if (req.query.content !== undefined) {
+  if (query.content !== undefined) {
     conditions.push('td.content LIKE ?');
-    params.push(`%${text(req.query.content, 'content', { max: 255 })}%`);
+    params.push(`%${text(query.content, 'content', { max: 255 })}%`);
   }
-  if (req.query.status !== undefined) {
-    if (!TODO_STATUSES.includes(req.query.status)) {throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);}
+}
+
+function addExactSearchFilters(query, conditions, params) {
+  if (query.status !== undefined) {
+    if (!TODO_STATUSES.includes(query.status)) {throw new HttpError(400, `status must be one of: ${TODO_STATUSES.join(', ')}`);}
     conditions.push('td.status = ?');
-    params.push(req.query.status);
+    params.push(query.status);
   }
-  if (req.query.archived !== undefined) {
-    if (!['true', 'false'].includes(req.query.archived)) {throw new HttpError(400, 'archived must be true or false');}
+  if (query.archived !== undefined) {
+    if (!['true', 'false'].includes(query.archived)) {throw new HttpError(400, 'archived must be true or false');}
     conditions.push('td.archived = ?');
-    params.push(req.query.archived === 'true');
+    params.push(query.archived === 'true');
   }
-  if (req.query.folder === 'none') {
+  if (query.folder === 'none') {
     conditions.push('td.folder_id IS NULL');
-  } else if (req.query.folder !== undefined) {
+  } else if (query.folder !== undefined) {
     conditions.push('td.folder_id = ?');
-    params.push(parseId(req.query.folder, 'folder'));
+    params.push(parseId(query.folder, 'folder'));
   }
-  if (req.query.tag !== undefined) {
-    const tag = text(req.query.tag, 'tag', { max: 64 }).toLowerCase();
+  if (query.tag !== undefined) {
+    const tag = text(query.tag, 'tag', { max: 64 }).toLowerCase();
     conditions.push('EXISTS (SELECT 1 FROM todo_tags stt JOIN tags st ON st.id = stt.tag_id WHERE stt.todo_id = td.id AND st.name = ?)');
     params.push(tag);
   }
+}
 
-  const dateFrom = req.query.date_from === undefined ? undefined : searchDate(req.query.date_from, 'date_from');
-  const dateTo = req.query.date_to === undefined ? undefined : searchDate(req.query.date_to, 'date_to', true);
+function addDateSearchFilters(query, conditions, params) {
+  const dateFrom = query.date_from === undefined ? undefined : searchDate(query.date_from, 'date_from');
+  const dateTo = query.date_to === undefined ? undefined : searchDate(query.date_to, 'date_to', true);
   if (dateFrom && dateTo && dateFrom > dateTo) {throw new HttpError(400, 'date_from cannot be later than date_to');}
   if (dateFrom) {
     conditions.push('td.`date` >= ?');
@@ -166,19 +166,39 @@ router.get('/search', asyncHandler(async (req, res) => {
     conditions.push('td.`date` <= ?');
     params.push(dateTo);
   }
+}
+
+function searchOptions(query) {
+  const page = query.page === undefined ? 1 : parseId(query.page, 'page');
+  const limit = query.limit === undefined ? 50 : parseId(query.limit, 'limit');
+  if (limit > 100) {throw new HttpError(400, 'limit cannot exceed 100');}
 
   const sortColumns = { date: 'td.`date`', title: 'td.title', status: 'td.status' };
-  const sort = req.query.sort || 'date';
-  const order = (req.query.order || 'desc').toLowerCase();
+  const sort = query.sort || 'date';
+  const order = (query.order || 'desc').toLowerCase();
   if (!sortColumns[sort]) {throw new HttpError(400, 'sort must be one of: date, title, status');}
   if (!['asc', 'desc'].includes(order)) {throw new HttpError(400, 'order must be asc or desc');}
+  return { page, limit, sortColumn: sortColumns[sort], order };
+}
+
+router.get('/search', asyncHandler(async (req, res) => {
+  rejectUnknown(req.query, [
+    'q', 'title', 'content', 'status', 'archived', 'folder', 'tag', 'date_from', 'date_to',
+    'page', 'limit', 'sort', 'order'
+  ]);
+  const conditions = ['td.author = ?'];
+  const params = [req.user.id];
+  addTextSearchFilters(req.query, conditions, params);
+  addExactSearchFilters(req.query, conditions, params);
+  addDateSearchFilters(req.query, conditions, params);
+  const { page, limit, sortColumn, order } = searchOptions(req.query);
 
   const where = conditions.join(' AND ');
   const offset = (page - 1) * limit;
   const [countRows] = await pool.execute(`SELECT COUNT(*) total FROM todos td WHERE ${where}`, params);
   const [rows] = await pool.execute(
     `SELECT td.id, td.author, td.folder_id AS folder, td.title, td.content, td.archived, td.status, td.\`date\`
-     FROM todos td WHERE ${where} ORDER BY ${sortColumns[sort]} ${order.toUpperCase()}, td.id DESC LIMIT ${limit} OFFSET ${offset}`,
+     FROM todos td WHERE ${where} ORDER BY ${sortColumn} ${order.toUpperCase()}, td.id DESC LIMIT ${limit} OFFSET ${offset}`,
     params
   );
   res.json({
@@ -203,8 +223,9 @@ async function update(req, res, partial) {
     await getTodo(id, req.user.id, connection);
     if (input.folder !== undefined) {await assertFolder(input.folder, req.user.id, connection);}
     if (entries.length) {
+      const assignments = entries.map(([field]) => `${field} = ?`).join(', ');
       await connection.execute(
-        `UPDATE todos SET ${entries.map(([field]) => `${field} = ?`).join(', ')} WHERE id = ? AND author = ?`,
+        `UPDATE todos SET ${assignments} WHERE id = ? AND author = ?`,
         [...entries.map(([, value]) => value), id, req.user.id]
       );
     }

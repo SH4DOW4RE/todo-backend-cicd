@@ -94,7 +94,7 @@ describe('Todos Routes and Services', () => {
       .query({ status: 'completed', archived: 'false', search: 'Find', limit: 10, page: 1 });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBe(1);
+    expect(res.body.data).toHaveLength(1);
     expect(res.body.pagination.total).toBe(1);
   });
 
@@ -119,7 +119,7 @@ describe('Todos Routes and Services', () => {
       .query({ q: 'recipe', sort: 'title', order: 'asc', date_from: '2026-06-19', date_to: '2026-06-23' });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBe(2);
+    expect(res.body.data).toHaveLength(2);
     expect(res.body.data[0].title).toBe('Apple'); // Ordre ASC sur le titre
   });
 
@@ -232,7 +232,7 @@ describe('Todos Routes and Services', () => {
       .query({ title: 'Specific', content: 'Unique', archived: 'true' });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBe(1); // Couvre les branches des filtres cumulatifs
+    expect(res.body.data).toHaveLength(1); // Couvre les branches des filtres cumulatifs
   });
 
   it('should return 400 on GET /todos or search if archived parameter is not true or false', async () => {

@@ -3,14 +3,14 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db');
 const authenticate = require('../middleware/auth');
 const { HttpError, asyncHandler } = require('../errors');
-const { objectBody, rejectUnknown, text } = require('../validation');
+const { objectBody, rejectUnknown, text, isEmail } = require('../validation');
 
 const router = express.Router();
 
 function email(value, optional = false) {
   const result = text(value, 'email', { max: 254, optional });
   if (result === undefined) {return undefined;}
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) {throw new HttpError(400, 'email must be a valid email address');}
+  if (!isEmail(result)) {throw new HttpError(400, 'email must be a valid email address');}
   return result.toLowerCase();
 }
 
@@ -33,7 +33,8 @@ router.patch('/me', asyncHandler(async (req, res) => {
     password: body.password === undefined ? undefined : await bcrypt.hash(text(body.password, 'password', { min: 8, max: 128 }), 12)
   };
   const entries = Object.entries(values).filter(([, value]) => value !== undefined);
-  await pool.execute(`UPDATE users SET ${entries.map(([field]) => `${field} = ?`).join(', ')} WHERE id = ?`, [...entries.map(([, value]) => value), req.user.id]);
+  const assignments = entries.map(([field]) => `${field} = ?`).join(', ');
+  await pool.execute(`UPDATE users SET ${assignments} WHERE id = ?`, [...entries.map(([, value]) => value), req.user.id]);
   const [rows] = await pool.execute('SELECT id, username, email FROM users WHERE id = ?', [req.user.id]);
   res.json(rows[0]);
 }));

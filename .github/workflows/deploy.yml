@@ -1,37 +1,29 @@
 name: Publish backend Docker image
 
 on:
-  workflow_run:
-    workflows:
-      - Node.js CI
-    types:
-      - completed
-    branches:
-      - main
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: dockerhub-${{ github.event.workflow_run.head_branch || github.ref }}
+  group: dockerhub-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   publish:
     name: Build and publish backend
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
-      # workflow_run has access to repository secrets. Check out the trusted
-      # default branch rather than an event-provided ref that could be untrusted.
-      - name: Check out trusted main branch
-        uses: actions/checkout@v7
-        with:
-          ref: main
+      - name: Check out tested commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0

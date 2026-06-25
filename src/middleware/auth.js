@@ -9,7 +9,7 @@ function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
 
   // 1. Vérification de la présence du header Authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     throw new HttpError(401, 'Access denied. No token provided.');
   }
 
@@ -22,7 +22,7 @@ function authMiddleware(req, res, next) {
 
     // 3. Injection de l'utilisateur dans la requête (en récupérant l'id depuis sub)
     req.user = {
-      id: decoded.sub ? parseInt(decoded.sub, 10) : null
+      id: decoded.sub ? Number.parseInt(decoded.sub, 10) : null
     };
 
     if (!req.user.id) {

@@ -96,8 +96,9 @@ async function update(req, res, partial) {
     await getFolder(id, req.user.id, connection);
     if (parent !== undefined) {await assertParent(parent, req.user.id, id, connection);}
     const entries = Object.entries({ name, parent_id: parent }).filter(([, value]) => value !== undefined);
+    const assignments = entries.map(([field]) => `${field} = ?`).join(', ');
     await connection.execute(
-      `UPDATE folders SET ${entries.map(([field]) => `${field} = ?`).join(', ')} WHERE id = ? AND author = ?`,
+      `UPDATE folders SET ${assignments} WHERE id = ? AND author = ?`,
       [...entries.map(([, value]) => value), id, req.user.id]
     );
     return getFolder(id, req.user.id, connection);

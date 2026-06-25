@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS todos (
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   archived BOOLEAN NOT NULL DEFAULT FALSE,
-  status ENUM('pending', 'in_progress', 'completed', 'blocked') NOT NULL DEFAULT 'pending',
+  status ENUM('pending', 'in_progress', 'completed', 'blocked') NOT NULL DEFAULT 'pending', -- NOSONAR: enum values must be declared literally
   `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY todos_author_idx (author),
@@ -42,11 +42,11 @@ CREATE TABLE IF NOT EXISTS todos (
 -- Upgrade an existing database without dropping todo data.
 SET @has_creation_date = (
   SELECT COUNT(*) FROM information_schema.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'todos' AND COLUMN_NAME = 'creation_date'
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'todos' AND COLUMN_NAME = 'creation_date' -- NOSONAR: metadata identifiers are intentional
 );
 SET @sql = IF(@has_creation_date > 0,
   'ALTER TABLE todos RENAME COLUMN creation_date TO `date`',
-  'SELECT 1'
+  'SELECT 1' -- NOSONAR: intentional no-op for idempotent migration
 );
 PREPARE statement FROM @sql; EXECUTE statement; DEALLOCATE PREPARE statement;
 ALTER TABLE todos MODIFY `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;

@@ -66,7 +66,7 @@ describe('Folders Routes', () => {
     const res = await request(app).get('/folders');
 
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBe(1);
+    expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].name).toBe('Work');
   });
 
