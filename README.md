@@ -1,6 +1,7 @@
 # Todo Backend
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SH4DOW4RE/todo-backend-cicd/ci.yml?branch=main&style=for-the-badge&logo=github&label=ci%2Fcd)
+![GitHub Actions Tests Status](https://img.shields.io/github/actions/workflow/status/SH4DOW4RE/todo-backend-cicd/ci.yml?branch=main&style=for-the-badge&logo=github&label=TESTS)
+![GitHub Actions Publish Status](https://img.shields.io/github/actions/workflow/status/SH4DOW4RE/todo-backend-cicd/deploy.yml?style=for-the-badge&logo=docker&label=PUBLISH)
 
 
 Node.js, Express, and MySQL REST API for a Todo desktop application.
