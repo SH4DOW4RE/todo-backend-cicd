@@ -45,14 +45,13 @@ jobs:
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push backend image
+        id: build
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ steps.image.outputs.name }}:latest
-            ${{ steps.image.outputs.name }}:sha-${{ steps.image.outputs.short_sha }}
+          tags: ${{ steps.image.outputs.name }}:sha-${{ steps.image.outputs.short_sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ steps.image.outputs.commit_sha }}
@@ -60,3 +59,9 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: mode=max
           sbom: true
+
+      - name: Publish latest tag
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: docker buildx imagetools create --tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}@${IMAGE_DIGEST}"
